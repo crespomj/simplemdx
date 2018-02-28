@@ -7,6 +7,7 @@ import logging
 from past.builtins import basestring
 from future.utils import iteritems
 from datetime import datetime
+#from converter import Converter
 
 logging.basicConfig(level=logging.INFO)
 
@@ -227,6 +228,18 @@ class Stream(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
+    def briefest(self):
+        """Returns the briefest marker"""
+        return min(len(i.datac) for i in self.items)
+
+    def longest_common_chunk(self):
+        """Returns the longest period of time in which all coordinates of all DataItems are visible"""
+        li = self.briefest()
+        print(li)
+        # for i in self.items:
+        #     print(i.label)
+        #     print(map(bool,i.datac.X))
+
 
 class MarkerStream(Stream):
     """docstring for MarkerStream"""
@@ -263,6 +276,9 @@ class MarkerStream(Stream):
             if len(lista) == 1:
                 return self.items[lista[0]]
             raise KeyError("More than one marker with label %s", index)
+
+    def toTRC(self):
+        return Converter(self).toTRC()
 
 
 class emgStream(Stream):
@@ -405,3 +421,8 @@ class Parser(object):
             stream = self.root.static
             if stream:
                 return sessionMDXstream(stream)
+
+
+if __name__ == '__main__':
+    a = Parser('../tests/test_files/1477~ac~Walking 01.mdx')
+    j = a.markers.longest_common_chunk()
