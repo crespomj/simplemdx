@@ -9,7 +9,7 @@ import click
 def main(args=None):
     """Console script for simplemdxparser."""
     click.echo("Replace this message by putting your code into "
-               "simplemdxparser.cli.main")
+               "simplemdx.cli.main")
     click.echo("See click documentation at http://click.pocoo.org/")
     return 0
 
