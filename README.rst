@@ -21,9 +21,10 @@ simplemdx
      :target: https://pyup.io/repos/github/marnunez/simplemdx/
      :alt: Updates
 
-.. image:: https://pyup.io/repos/github/marnunez/simplemdx/python-3-shield.svg
-     :target: https://pyup.io/repos/github/marnunez/simplemdx/
-     :alt: Python 3
+.. image:: https://coveralls.io/repos/github/marnunez/simplemdx/badge.svg?branch=master
+     :target: https://coveralls.io/github/marnunez/simplemdx?branch=master
+     :alt: Coverage
+
 
 
 
