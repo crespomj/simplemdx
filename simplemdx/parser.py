@@ -320,7 +320,7 @@ class sessionMDXstream(Stream):
         return datetime.strptime(self['Session date'].data, "%d/%m/%Y").date()
 
 
-class simpleMDXParser(object):
+class Parser(object):
     def __init__(self, filename):
         self.norm = self.trial = self.sessionMDX = False
         self.filename = filename

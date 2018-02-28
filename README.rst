@@ -1,28 +1,28 @@
 ===============
-simplemdxparser
+simplemdx
 ===============
 
 
-.. image:: https://img.shields.io/pypi/v/simplemdxparser.svg
-        :target: https://pypi.python.org/pypi/simplemdxparser
+.. image:: https://img.shields.io/pypi/v/simplemdx.svg
+        :target: https://pypi.python.org/pypi/simplemdx
 
-.. image:: https://img.shields.io/travis/marnunez/simplemdxparser.svg
-        :target: https://travis-ci.org/marnunez/simplemdxparser
+.. image:: https://img.shields.io/travis/marnunez/simplemdx.svg
+        :target: https://travis-ci.org/marnunez/simplemdx
 
 .. image:: https://ci.appveyor.com/api/projects/status/r3ocgu92pa7c6nf2?svg=true
-     :target: https://ci.appveyor.com/project/marnunez/simplemdxparser
+     :target: https://ci.appveyor.com/project/marnunez/simplemdx
      :alt: Windows build status
 
-.. image:: https://readthedocs.org/projects/simplemdxparser/badge/?version=latest
-        :target: https://simplemdxparser.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/simplemdx/badge/?version=latest
+        :target: https://simplemdx.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-.. image:: https://pyup.io/repos/github/marnunez/simplemdxparser/shield.svg
-     :target: https://pyup.io/repos/github/marnunez/simplemdxparser/
+.. image:: https://pyup.io/repos/github/marnunez/simplemdx/shield.svg
+     :target: https://pyup.io/repos/github/marnunez/simplemdx/
      :alt: Updates
 
-.. image:: https://pyup.io/repos/github/marnunez/simplemdxparser/python-3-shield.svg
-     :target: https://pyup.io/repos/github/marnunez/simplemdxparser/
+.. image:: https://pyup.io/repos/github/marnunez/simplemdx/python-3-shield.svg
+     :target: https://pyup.io/repos/github/marnunez/simplemdx/
      :alt: Python 3
 
 
@@ -31,7 +31,7 @@ A simple BTS MDX file parser based on BeautifulSoup
 
 
 * Free software: GNU General Public License v3
-* Documentation: https://simplemdxparser.readthedocs.io.
+* Documentation: https://simplemdx.readthedocs.io.
 
 
 Features
