@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = python -msphinx
-SPHINXPROJ    = simplemdxparser
+SPHINXPROJ    = simplemdx
 SOURCEDIR     = .
 BUILDDIR      = _build
 
