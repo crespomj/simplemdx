@@ -39,7 +39,7 @@ setup(
         ],
     },
     install_requires=requirements,
-    license="MIT license",
+    license="GNU GPLv3 Licence",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
     keywords='simplemdxparser',

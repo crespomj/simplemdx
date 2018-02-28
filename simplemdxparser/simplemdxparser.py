@@ -405,23 +405,3 @@ class simpleMDXParser(object):
             stream = self.root.static
             if stream:
                 return sessionMDXstream(stream)
-
-
-if __name__ == '__main__':
-    # a = simpleMDXParser('test_files\Gait-Normal-adults.enb')
-    # session = simpleMDXParser('test_files\\2148~aa~Descalzo con bastón.mdx')
-    trial = simpleMDXParser('test_files\\1477~ac~Walking 01.mdx')
-    j = trial.markers['c7']
-    # print(trial.emg[0].data.V)
-    # import matplotlib.pyplot as plt
-    # import numpy as np
-    # j = trial.emg[0]
-    # ev = trial.static['eLHS'].data
-    # print(ev)
-    # f = trial.emg.freq
-    # data = j.data.V
-    # t = [i/f for i in range(len(data))]
-    # plt.plot(t,j.data.V,label=j.label)
-    # plt.legend()
-    # plt.show()
-    # print(session.session['dTH'])
