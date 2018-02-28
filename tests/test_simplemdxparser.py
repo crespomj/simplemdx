@@ -20,7 +20,7 @@ test_files_dir = os.path.join(
     'test_files')
 
 
-class TestSimpleParser(object):
+class TestParser(object):
     """pytest class for the parser"""
 
     def trialMDX(self):
@@ -68,6 +68,9 @@ class TestSimpleParser(object):
         assert a.emg[0].data.frame == 0
         assert len(a.emg[0].data.V) == 10253
 
+        # If single segment, data == datac
+        assert a.emg[0].data.V == a.emg[0].datac.V
+
     def test_trial_events(self):
         a = self.trialMDX()
         assert a.static['eLHS'].data == [3.81, 4.73]
@@ -81,7 +84,8 @@ class TestSimpleParser(object):
         assert a.session.birthday == date(1959, 12, 1)
 
     def test_Segment(self):
-        a = Segment()
+        # a = Segment()
+        pass
 
 
 @pytest.fixture
@@ -94,10 +98,10 @@ def response():
     # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
 
 
-def test_content(response):
-    """Sample pytest test function with the pytest fixture as an argument."""
-    # from bs4 import BeautifulSoup
-    # assert 'GitHub' in BeautifulSoup(response.content).title.string
+# def test_content(response):
+#     """Sample pytest test function with the pytest fixture as an argument."""
+#     # from bs4 import BeautifulSoup
+#     # assert 'GitHub' in BeautifulSoup(response.content).title.string
 
 
 def test_command_line_interface():
