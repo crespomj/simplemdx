@@ -6,7 +6,7 @@ python:
 - 2.7
 install: 
 - pip install -U tox-travis
-- pip install -U python-coveralls
+- pip install -U coveralls-python
 script: "tox"
 after_success: "coveralls"
 deploy:
