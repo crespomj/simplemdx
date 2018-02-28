@@ -13,6 +13,14 @@ simplemdxparser
         :target: https://simplemdxparser.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
+.. image:: https://pyup.io/repos/github/marnunez/simplemdxparser/shield.svg
+     :target: https://pyup.io/repos/github/marnunez/simplemdxparser/
+     :alt: Updates
+
+.. image:: https://pyup.io/repos/github/marnunez/simplemdxparser/python-3-shield.svg
+     :target: https://pyup.io/repos/github/marnunez/simplemdxparser/
+     :alt: Python 3
+
 
 
 
