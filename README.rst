@@ -21,6 +21,9 @@ simplemdxparser
      :target: https://pyup.io/repos/github/marnunez/simplemdxparser/
      :alt: Python 3
 
+.. image:: https://ci.appveyor.com/api/projects/status/r3ocgu92pa7c6nf2?svg=true
+     :target: https://ci.appveyor.com/project/marnunez/simplemdxparser
+     :alt: Windows build status
 
 
 
