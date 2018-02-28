@@ -27,7 +27,7 @@ simplemdx
 
 
 
-A simple BTS MDX file parser based on BeautifulSoup
+A simple BTS MDX file parser and toolkit written in Python based on BeautifulSoup_
 
 
 * Free software: GNU General Public License v3
@@ -37,7 +37,11 @@ A simple BTS MDX file parser based on BeautifulSoup
 Features
 --------
 
-* TODO
+simplemdx's parser gives access to:
+
+* trial MDXs (marker coordinates, emg channels, etc)
+* session and patient MDXs (antropometric data, subject metadata)
+* normative ENB files (joint angles normatives, emg normatives, etc)
 
 Credits
 -------
@@ -46,3 +50,4 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+.. _BeautifulSoup: https://www.crummy.com/software/BeautifulSoup/bs4/doc/

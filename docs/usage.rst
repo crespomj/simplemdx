@@ -2,6 +2,6 @@
 Usage
 =====
 
-To use simplemdxparser in a project::
+To use simplemdx in a project::
 
-    import simplemdxparser
+    import simplemdx
