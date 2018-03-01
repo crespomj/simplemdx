@@ -4,8 +4,15 @@ python:
 - 3.5
 - 3.4
 - 2.7
-install: pip install -U tox-travis
-script: tox
+install: 
+- pip install -U tox-travis
+- pip install -U coveralls
+- pip install -r requirements_dev.txt
+- pip install -r requirements.txt
+script: 
+- "tox"
+- "coverage run --source=simplemdx -m pytest"
+after_success: "coveralls"
 deploy:
   provider: pypi
   distributions: sdist bdist_wheel
@@ -14,5 +21,5 @@ deploy:
     secure: lQjG9Sww8j4ibEn+oFMZFspQiGupk9l7MeepEBVX9dBwvDeso3cdIKFV6+y3Tlvaj8NdT9eOrnqsp8JH1l2VEqpTo/zU0DBJzLnNK6osq+6n/yX8N3B58Hwr7xcMfx2NOJB34jpR36BLxxGV6LEV9gGxSwjhxoZJwRzheI/UXtEM33at/VCIwlZ+Al/x0Xy8ZnO4CBTd1+UlOw2Zg9Qjt5RQgacsQ123zBkHhMqbTzUkTeOD6F3lO1aVLALSKGU1MlmZ0qzEULmRZzqOBHUzN9MT93S1Jm3Ql4jT8j7qpA1nTJTUBA8+TyfE4HxSOpTe1Ugi24Fa0gXQDBp0gqqRKkTE8myKgWhy+RxhwdOgZXzu49TXctmajm0AkCkw0eVxM015Aq+BU/04iGxchrIZsodmayl3TgWMjghgjBeCOUJe2GZbTVFSG4NBhaE2lsuJjjxdK3O0h+C7ZULm1we14yKxD32YjeTmFU61/JWigJtw1ps62/H1SZm0GvLd1NH0dggjZmnpROaPDHnNwT6vNCVDN7A5il0p2bIziBWPERno9CBe1KPSVXONod50xbrQDkgjW+3IliDvp/rowzCXR+jBFb+Abdw+gF4Xypy8lVAgf5RCdxbeIqx+B8NS4lxAL5PsWHUR514guo3GLeiqjN277/4Y7H3uEcLFih9ix4k=
   on:
     tags: true
-    repo: marnunez/simplemdxparser
+    repo: marnunez/simplemdx
     python: 3.6

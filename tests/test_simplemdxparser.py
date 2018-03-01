@@ -7,12 +7,11 @@ import pytest
 
 from click.testing import CliRunner
 
-from simplemdxparser import simplemdxparser
-from simplemdxparser import cli
+from simplemdx import cli
 
 import os
 from datetime import date, time
-from simplemdxparser.simplemdxparser import Segment, Stream, MarkerStream, emgStream, simpleMDXParser
+from simplemdx.parser import Segment, Stream, MarkerStream, emgStream, Parser
 from past.builtins import basestring
 
 
@@ -21,14 +20,14 @@ test_files_dir = os.path.join(
     'test_files')
 
 
-class TestSimpleParser(object):
+class TestParser(object):
     """pytest class for the parser"""
 
     def trialMDX(self):
-        return simpleMDXParser(os.path.join(test_files_dir, u'1477~ac~Walking 01.mdx'))
+        return Parser(os.path.join(test_files_dir, u'1477~ac~Walking 01.mdx'))
 
     def sessionMDX(self):
-        return simpleMDXParser(os.path.join(test_files_dir, u'2148~aa~Descalzo con bastón.mdx'))
+        return Parser(os.path.join(test_files_dir, u'2148~aa~Descalzo con bastón.mdx'))
 
     def test_parse_trialMDX(self):
         a = self.trialMDX()
@@ -44,7 +43,7 @@ class TestSimpleParser(object):
 
     def test_trial_markers(self):
         a = self.trialMDX()
-        assert isinstance(a.markers,MarkerStream)
+        assert isinstance(a.markers, MarkerStream)
         assert len(a.markers) == 53 == len(a.markers.items)
         assert len(a.markers.references) == 16
 
@@ -57,17 +56,20 @@ class TestSimpleParser(object):
 
         dc = c7.datac
         assert isinstance(dc, Segment)
-        assert len(dc.X) == len(c7.data[-1].X)+c7.data[-1].frame
-        assert len(dc.Y) == len(c7.data[-1].Y)+c7.data[-1].frame
-        assert len(dc.Z) == len(c7.data[-1].Z)+c7.data[-1].frame
+        assert len(dc.X) == len(c7.data[-1].X) + c7.data[-1].frame
+        assert len(dc.Y) == len(c7.data[-1].Y) + c7.data[-1].frame
+        assert len(dc.Z) == len(c7.data[-1].Z) + c7.data[-1].frame
 
     def test_trial_emg(self):
         a = self.trialMDX()
-        assert isinstance(a.emg,emgStream)
+        assert isinstance(a.emg, emgStream)
         assert a.emg[0] == a.emg['Left Rectus femoris']
-        assert isinstance(a.emg[0].data,Segment)
+        assert isinstance(a.emg[0].data, Segment)
         assert a.emg[0].data.frame == 0
         assert len(a.emg[0].data.V) == 10253
+
+        # If single segment, data == datac
+        assert a.emg[0].data.V == a.emg[0].datac.V
 
     def test_trial_events(self):
         a = self.trialMDX()
@@ -82,8 +84,8 @@ class TestSimpleParser(object):
         assert a.session.birthday == date(1959, 12, 1)
 
     def test_Segment(self):
-        a = Segment()
-
+        # a = Segment()
+        pass
 
 
 @pytest.fixture
@@ -96,10 +98,10 @@ def response():
     # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')
 
 
-def test_content(response):
-    """Sample pytest test function with the pytest fixture as an argument."""
-    # from bs4 import BeautifulSoup
-    # assert 'GitHub' in BeautifulSoup(response.content).title.string
+# def test_content(response):
+#     """Sample pytest test function with the pytest fixture as an argument."""
+#     # from bs4 import BeautifulSoup
+#     # assert 'GitHub' in BeautifulSoup(response.content).title.string
 
 
 def test_command_line_interface():
@@ -107,7 +109,7 @@ def test_command_line_interface():
     runner = CliRunner()
     result = runner.invoke(cli.main)
     assert result.exit_code == 0
-    assert 'simplemdxparser.cli.main' in result.output
+    assert 'simplemdx.cli.main' in result.output
     help_result = runner.invoke(cli.main, ['--help'])
     assert help_result.exit_code == 0
     assert '--help  Show this message and exit.' in help_result.output

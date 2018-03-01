@@ -1,4 +1,4 @@
-Welcome to simplemdxparser's documentation!
+Welcome to simplemdx's documentation!
 ======================================
 
 .. toctree::

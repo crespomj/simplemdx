@@ -1,4 +1,4 @@
-* simplemdxparser version:
+* simplemdx version:
 * Python version:
 * Operating System:
 
