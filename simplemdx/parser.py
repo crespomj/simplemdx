@@ -7,6 +7,15 @@ import logging
 from past.builtins import basestring
 from future.utils import iteritems
 from datetime import datetime
+from itertools import groupby
+import numpy as np
+import pandas as pd
+from future.moves.itertools import zip_longest
+from operator import itemgetter
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.widgets import Slider
 #from converter import Converter
 
 logging.basicConfig(level=logging.INFO)
@@ -41,6 +50,10 @@ class DataItem(object):
     @property
     def datac(self):
         return self.parse_data(cont=True)
+
+    @property
+    def valid(self):
+        return [bool(i.X) for i in self.datac]
 
     @property
     def description(self):
@@ -228,17 +241,25 @@ class Stream(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    def briefest(self):
-        """Returns the briefest marker"""
-        return min(len(i.datac) for i in self.items)
-
     def longest_common_chunk(self):
-        """Returns the longest period of time in which all coordinates of all DataItems are visible"""
-        li = self.briefest()
-        print(li)
-        # for i in self.items:
-        #     print(i.label)
-        #     print(map(bool,i.datac.X))
+        """Returns the longest period of time in which all
+        coordinates of all DataItems are visible"""
+
+        def f(x):
+            return True if x is not None else False
+
+        items = self.items
+        res = map(f, items[0].datac.X)
+        for i in items:
+            li = map(f, i.datac.X)
+            res = (a and b for a, b in zip_longest(res, li, fillvalue=False))
+
+        # Enumerate the list, group by True/False,
+        # filter by True, get the max length
+        j = max(((lambda y: (y[0][0], len(y)))(list(g)) for k, g in groupby(
+            enumerate(res), lambda x: x[1]) if k), key=lambda z: z[1])
+        # j => (position,length)
+        return j
 
 
 class MarkerStream(Stream):
@@ -277,6 +298,37 @@ class MarkerStream(Stream):
                 return self.items[lista[0]]
             raise KeyError("More than one marker with label %s", index)
 
+    def toPandas(self):
+        ini,leng = self.longest_common_chunk()
+
+        dat = {}
+        for i in self.items:
+            dat[i.label] = {}
+            for c in ['X','Y','Z']:
+                dat[i.label][c] = i.datac[c]
+
+        return dat
+
+    def draw(self):
+        df = self.toPandas()
+
+        def update_graph(num):
+            data=df[df['time']==num]
+            graph._offsets3d = (data.x, data.y, data.z)
+            title.set_text('3D Test, time={}'.format(num))
+
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        title = ax.set_title('3D Test')
+
+        data=df[df['time']==0]
+        graph = ax.scatter(data.x, data.y, data.z)
+
+        ani = matplotlib.animation.FuncAnimation(fig, update_graph, 19, 
+                                       interval=40, blit=False)
+
+        plt.show()
     def toTRC(self):
         return Converter(self).toTRC()
 
@@ -425,4 +477,5 @@ class Parser(object):
 
 if __name__ == '__main__':
     a = Parser('../tests/test_files/1477~ac~Walking 01.mdx')
-    j = a.markers.longest_common_chunk()
+    m = a.markers
+    m.toPandas()
