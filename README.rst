@@ -9,7 +9,7 @@ simplemdx
 .. image:: https://img.shields.io/travis/marnunez/simplemdx.svg
         :target: https://travis-ci.org/marnunez/simplemdx
 
-.. image:: https://ci.appveyor.com/api/projects/status/r3ocgu92pa7c6nf2?svg=true
+.. image:: https://ci.appveyor.com/api/projects/status/xb07amo9s7stk37r?svg=true
      :target: https://ci.appveyor.com/project/marnunez/simplemdx
      :alt: Windows build status
 
