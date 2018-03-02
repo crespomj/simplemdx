@@ -10,12 +10,13 @@ from datetime import datetime
 from itertools import groupby
 import numpy as np
 import pandas as pd
+import seaborn as sbn
 from future.moves.itertools import zip_longest
 from operator import itemgetter
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.widgets import Slider
+from matplotlib.widgets import Slider,CheckButtons
 #from converter import Converter
 
 logging.basicConfig(level=logging.INFO)
@@ -306,29 +307,103 @@ class MarkerStream(Stream):
             dat[i.label] = {}
             for c in ['X','Y','Z']:
                 dat[i.label][c] = i.datac[c]
-
         return dat
 
     def draw(self):
-        df = self.toPandas()
+        #inipos,rang = self.longest_common_chunk()
+        inipos = 0;
+        rang = max(len(i.datac.X) for i in self.items)
+
+        from mpl_toolkits.mplot3d.proj3d import proj_transform
+        from matplotlib.text import Annotation
 
         def update_graph(num):
-            data=df[df['time']==num]
-            graph._offsets3d = (data.x, data.y, data.z)
-            title.set_text('3D Test, time={}'.format(num))
+            num = int(num)
+            for i in self.items:
+                data = gdata[i.label]
+                X = data.X[num:1+num]
+                Y = data.Y[num:1+num]
+                Z = [-i if i else None for i in data.Z[num:1+num]]
+                if (X and Y and Z):
+                    graphs[i.label].set_data (X, Z)
+                    graphs[i.label].set_3d_properties(Y)
+            for i in self.references.items:
+                data = rdata[i.label]
+                X = data.X[num:1+num]
+                Y = data.Y[num:1+num]
+                Z = [-i if i else None for i in data.Z[num:1+num]]
+                if (X and Y and Z):
+                    rraphs[i.label].set_data (X, Z)
+                    rraphs[i.label].set_3d_properties(Y)
 
+                title.set_text('3D Markers Plot, time={}'.format((inipos+num)/self.freq))
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        title = ax.set_title('3D Test')
+        ax.axis('scaled')
+        ax.set_xlim([-2,2])
+        ax.set_ylim([-1,1])
+        fig.tight_layout(True)
 
-        data=df[df['time']==0]
-        graph = ax.scatter(data.x, data.y, data.z)
+        title = ax.set_title('3D Markers Plot')
 
-        ani = matplotlib.animation.FuncAnimation(fig, update_graph, 19, 
-                                       interval=40, blit=False)
+        axamp = plt.axes([0.25, .03, 0.50, 0.04])
+        samp = Slider(axamp, 'Time', inipos, rang, valinit=0)
+        samp.on_changed(update_graph)
 
+        rax = plt.axes([0.05, 0.4, 0.1, 0.15])
+        check = CheckButtons(rax, ('markers', 'references'), (True, True))
+
+        def func(label):
+            if label == 'markers':
+                for i in graphs.values():
+                    i.set_visible(not i.get_visible())
+            elif label == 'references':
+                for i in rraphs.values():
+                    i.set_visible(not i.get_visible())
+            fig.canvas.draw_idle()
+
+        check.on_clicked(func)
+
+        graphs = {}
+        gdata = {}
+        rraphs = {}
+        rdata = {}
+        for i in self.items + self.references.items:
+            data = i.datac
+            X = data.X[inipos:inipos+1]
+            Y = data.Y[inipos:inipos+1]
+            Z = [-i if i else None for i in data.Z[inipos:inipos+1]]
+            if i.name == 'track':
+                gdata[i.label] = data
+                graphs[i.label], = ax.plot(X, Z, Y,label=i.label,linestyle="", marker="o",picker = 5)
+            elif i.name == 'reference':
+                rdata[i.label] = data
+                rraphs[i.label], = ax.plot(X, Z, Y,label=i.label,linestyle="", marker="o",picker = 5)
+
+        annot = ax.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
+                            bbox=dict(boxstyle="round", fc="w"),
+                            arrowprops=dict(arrowstyle="->"))
+        annot.set_visible(False)
+
+        def hover(event):
+            vis = annot.get_visible()
+            for curve in ax.get_lines():
+                cont,ind = curve.contains(event)
+                if cont and curve.get_visible():
+                    annot.xy = (event.xdata,event.ydata)
+                    annot.set_text(curve.get_label())
+                    annot.get_bbox_patch().set_facecolor(curve.get_color())
+                    annot.set_visible(True)
+                    fig.canvas.draw_idle()
+                else:
+                    if vis:
+                        annot.set_visible(False)
+                        fig.canvas.draw_idle()
+        
+        fig.canvas.mpl_connect('motion_notify_event',hover)
         plt.show()
+
     def toTRC(self):
         return Converter(self).toTRC()
 
@@ -476,6 +551,10 @@ class Parser(object):
 
 
 if __name__ == '__main__':
-    a = Parser('../tests/test_files/1477~ac~Walking 01.mdx')
+    a = Parser('../tests/test_files/0776~af~Walking 06.mdx')
     m = a.markers
-    m.toPandas()
+    for i in m.items+m.references.items:
+        print(i.label)
+    # for i in m.references:
+    #     print(i.label)
+    m.draw()
