@@ -11,7 +11,7 @@ from simplemdx import cli
 
 import os
 from datetime import date, time
-from simplemdx.parser import Segment,MarkerStream, emgStream, Parser
+from simplemdx.parser import Segment, MarkerStream, emgStream, Parser
 from past.builtins import basestring
 
 
@@ -81,9 +81,27 @@ class TestParser(object):
 
     def test_parseSessionMDX(self):
         a = self.sessionMDX()
-        assert a.session.name == u'CACHO'
-        assert a.session.lastname == u'CASTAÑA'
-        assert a.session.birthday == date(1959, 12, 1)
+        b = a.session
+        assert b.name == u'CACHO'
+        assert b.lastname == u'CASTAÑA'
+        assert b.birthday == date(1959, 12, 1)
+        assert b.date == date(2017, 7, 4)
+        assert b.sex == 'M'
+        assert b.clinician == "Who, Doctor"
+        assert b.taxid == 'TEC'
+
+        assert b.address == ", ,  "
+
+        assert b.mass == b['mTB'].data == 79.0
+        assert b.height == b['dTH'].data == 1.74
+
+        assert b.right_leg_length == b['dRLL'].data == 0.94
+        assert b.left_leg_length == b['dLLL'].data == 0.93
+
+        assert b.right_pelvis_depth == b['dRPD'].data == 0.11
+        assert b.left_pelvis_depth == b['dLPD'].data == 0.11
+
+        assert b.asis_breadth == b['dAB'].data == 0.25
 
     def test_Segment(self):
         # a = Segment()

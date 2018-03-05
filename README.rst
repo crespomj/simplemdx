@@ -29,6 +29,7 @@ simplemdx
 
 
 
+
 A simple BTS MDX file parser and toolkit written in Python based on BeautifulSoup_
 
 
@@ -38,6 +39,8 @@ A simple BTS MDX file parser and toolkit written in Python based on BeautifulSou
 
 Features
 --------
+* Compatible with Python 2.7 and 3.4 onwards
+* Linux, OSX and Windows support
 
 simplemdx gives access to:
 
@@ -56,7 +59,7 @@ To load the contents of a trial mdx
 
     a = Parser('myfile.mdx')
 
-Once loaded, you can access its metadata
+Once loaded, metadata can be accessed like:
 
 .. code:: python
 
@@ -75,7 +78,7 @@ It also loads all it's streams, and names them according to their contents. The 
 Streams
 -------
 
-Every stream has its own metadata, such as frequency, start time and number of frames
+Every stream has its own metadata(such as frequency, start time and number of frames
 
 .. code:: python
 
@@ -97,25 +100,61 @@ Markers can be retrieved from the stream by index or label
     c7 = a.markers['c7']
     m = a.markers[0] # The first marker on the stream
 
+or iterated
+
+.. code:: python
+
+    for marker in a.markers:
+        print(marker.label)
+
 This stream can be converted to an OpenSIM .trc file like this
 
 .. code:: python
 
-    m.toTRC()
+    a.markers.toTRC()
 
-By default, it creates a trc file with the same label as the trial mdx and all the included markers. It's important to note that it will output the largest common chunk of data (the largest interval of time for which all markers are visible). This is to avoid None data in the .trc file. One can restrict the output to certain markers and change the output filename
+By default, it creates a trc file with the same label as the trial mdx and all the included markers.
+It is important to note that it will output the largest common chunk of data (the largest interval of time for which all markers are visible). This is to avoid None data in the .trc file. One can restrict the output to certain markers and change the output filename
 
 .. code:: python
 
-    m.toTRC(filename='my_trc_output.trc',labels=['c7','rasis','lasis'])
+    a.markers.toTRC(filename='my_trc_output.trc',labels=['c7','rasis','lasis'])
 
 As a simple way to inspect the stream, one can plot it
 
 .. code:: python
 
-    m.plot()
+    a.markers.plot()
 
-will display a simple matplotlib scatter plot with the markers and the references
+This will display a simple matplotlib 3D scatter plot with the markers and the references
+
+Data items
+----------
+
+The data for the streams inner tags are stored in DataItems. BTS follows an Item/Segment approach for storing most of it. For retrieving a segment of a marker, one can call the data attribute
+
+
+.. code:: python
+
+    c7 = a.markers['c7']
+    s = c7.data
+
+data will return a Segment object, or a list of Segment objects. Each Segment has a list for each coordinate (for a marker example, X, Y and Z) and the Segment's starting frame
+
+.. code:: python
+
+    seg = c7.data
+    if isintance(seg,Segment):
+        print("First frame: {}".format(seg.frame))
+        print("X data: {}".format(seg.X))
+
+addicionally, data can be retrieved as a continuous stream using datac instead of data. This will merge all segments into one, added a None padding. and return a single Segment starting at frame 0.
+
+.. code:: python
+
+    segc = c7.datac
+    print("X data: {}".format(seg.X))
+
 
 Credits
 -------

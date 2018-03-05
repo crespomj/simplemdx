@@ -97,7 +97,6 @@ class DataItem(object):
         return self.data[index]
 
     def __getattr__(self, at):
-        self.parse_data()
         return self.__dict__[at]
 
     def parse_data(self, cont=False):
@@ -107,8 +106,8 @@ class DataItem(object):
         # If it's a text Tag, don't parse
         if self._pnt.name == 'text':
             return data
-        if self._pnt.name == 'mass':
-            return int(data)
+        # if self._pnt.name == 'mass':
+        #     return int(data)
 
         # first: does it has items on it?
         if data.startswith("I "):
@@ -120,11 +119,13 @@ class DataItem(object):
 
         # else, load the data to self.
         d = self.parse_coords(data)
-        for n, c in enumerate(self.coords):
-            if isinstance(d, list) and len(d) == 1:
-                self.__dict__[c] = d[n][0]
-            else:
-                self.__dict__[c] = d
+        if isinstance(d,list):
+            for n,c in enumerate(self.coords):
+                self.__setattr__(c,d[n])
+        else:
+            self.__setattr__(self.coords[0],d)
+
+        return d
 
     def parse_items(self, data):
         # does it has any segments?
@@ -184,7 +185,6 @@ class DataItem(object):
         return segments
 
     def parse_coords(self, data):
-
         lista = []
         # give the data a format (int, char, date, whatever)
         sc = self.scaleFactor
@@ -229,6 +229,9 @@ class Stream(object):
             if len(lista) == 1:
                 return lista[0]
             return lista
+
+    def __getattr__(self,val):
+        return self[val]
 
     def __iter__(self):
         return iter(self.items)
@@ -542,18 +545,17 @@ class sessionMDXstream(Stream):
             ('session_notes', 'Session notes'),
             ('filename', 'File name'),
             ('protocol', 'Protocol'),
-            ('measureset', 'Measures set'))
+            ('measureset', 'Measures set'),
+            ('mass','mTB'),
+            ('height','dTH'),
+            ('asis_breadth','dAB'),
+            ('right_pelvis_depth','dRPD'),
+            ('left_pelvis_depth','dLPD'),
+            ('right_leg_length','dRLL'),
+            ('left_leg_length','dLLL'))
 
         for j, k in d:
             self.__setattr__(j, self[k].data)
-
-    @property
-    def mass(self):
-        return self['mTB'].data / self['mTB'].scaleFactor
-
-    @property
-    def height(self):
-        return self['dTH'].data / self['dTH'].scaleFactor
 
     @property
     def birthday(self):
@@ -568,8 +570,8 @@ class Parser(object):
     def __init__(self, filename):
         self.norm = self.trial = self.sessionMDX = False
         self.filename = filename
-        f = open(self.filename, 'rb')
-        self.soup = BeautifulSoup(f.read().decode('utf-8'), 'lxml-xml')
+        with open(self.filename, 'rb') as f:
+            self.soup = BeautifulSoup(f.read().decode('utf-8'), 'lxml-xml')
         trial = self.soup.emxDataFile.find('trial')
         if trial:
             self.root = trial
@@ -656,13 +658,8 @@ class Parser(object):
 
 
 if __name__ == '__main__':
-    a = Parser('../tests/test_files/2148~aa~Walking 01.mdx')
+    a = Parser('../tests/test_files/2148~aa~Descalzo con bastón.mdx')
     # for i in m.references:
     #     print(i.label)
-    a.markers['r asis'].label = "RASIS"
-    mlist = [i for i in a.markers.labels() if not (
-        i.endswith(" s") or i.endswith(" s2"))]
-    #a.markers['RASIS']
-    a.markers.toTRC(labels=mlist)
-    a.markers.plot(mlist)
-    print(mlist)
+    j = a.session['dRPD'].data
+    print(j)
