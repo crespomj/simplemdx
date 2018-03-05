@@ -49,15 +49,16 @@ Usage
 -----
 
 To load the contents of a trial mdx::
-
+.. code:: python
     from simplemdx.parser import Parser
 
     a = Parser('myfile.mdx')
 
 Once loaded, you can access its metadata::
-
+```python3
     label = a.label
     date = a.date
+ ```
 
 It also loads all it's streams, and names them according to their contents. The named streams can be:
 
