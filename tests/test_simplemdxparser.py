@@ -11,7 +11,7 @@ from simplemdx import cli
 
 import os
 from datetime import date, time
-from simplemdx.parser import Segment, Stream, MarkerStream, emgStream, Parser
+from simplemdx.parser import Segment,MarkerStream, emgStream, Parser
 from past.builtins import basestring
 
 
@@ -56,9 +56,11 @@ class TestParser(object):
 
         dc = c7.datac
         assert isinstance(dc, Segment)
-        assert len(dc.X) == len(c7.data[-1].X) + c7.data[-1].frame
-        assert len(dc.Y) == len(c7.data[-1].Y) + c7.data[-1].frame
-        assert len(dc.Z) == len(c7.data[-1].Z) + c7.data[-1].frame
+        # The length in continuous mode of any marker shoud be the
+        # the same as the stream's frame number
+        assert len(dc.X) == a.markers.nFrames
+        assert len(dc.Y) == a.markers.nFrames
+        assert len(dc.Z) == a.markers.nFrames
 
     def test_trial_emg(self):
         a = self.trialMDX()
