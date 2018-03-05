@@ -4,4 +4,4 @@
 
 __author__ = """Marcos Alfredo Núñez"""
 __email__ = 'mnunez@fleni.org.ar'
-__version__ = '0.1.5'
+__version__ = '0.1.6'
