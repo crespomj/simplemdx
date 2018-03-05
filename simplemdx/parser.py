@@ -438,9 +438,12 @@ class MarkerStream(Stream):
         fig.canvas.mpl_connect('motion_notify_event', hover)
         plt.show()
 
-    def toTRC(self, filename, labels=None):
+    def toTRC(self, filename=None, labels=None):
         """ Converts markerStream to an OpenSIM trc's file
             To avoid NaN values, the longest common chunk is used """
+
+        if not filename:
+            filename = self.pnt.parent['label'][:-4] + '.trc'
 
         if labels:
             items = []
@@ -652,14 +655,14 @@ class Parser(object):
                 return sessionMDXstream(stream)
 
 
-# if __name__ == '__main__':
-#     # a = Parser('../tests/test_files/2148~aa~Walking 01.mdx')
-#     # # for i in m.references:
-#     # #     print(i.label)
-#     # a.markers['r asis'].label = "RASIS"
-#     # mlist = [i for i in a.markers.labels() if not (
-#     #     i.endswith(" s") or i.endswith(" s2"))]
-#     # #a.markers['RASIS']
-#     # a.markers.toTRC('cacho', mlist)
-#     # a.markers.plot(mlist)
-#     # print(mlist)
+if __name__ == '__main__':
+    a = Parser('../tests/test_files/2148~aa~Walking 01.mdx')
+    # for i in m.references:
+    #     print(i.label)
+    a.markers['r asis'].label = "RASIS"
+    mlist = [i for i in a.markers.labels() if not (
+        i.endswith(" s") or i.endswith(" s2"))]
+    #a.markers['RASIS']
+    a.markers.toTRC(labels=mlist)
+    a.markers.plot(mlist)
+    print(mlist)
