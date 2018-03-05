@@ -8,16 +8,10 @@ from past.builtins import basestring
 from future.utils import iteritems
 from datetime import datetime
 from itertools import groupby
-import numpy as np
-import pandas as pd
-import seaborn as sbn
 from future.moves.itertools import zip_longest
-from operator import itemgetter
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.widgets import Slider,CheckButtons
-#from converter import Converter
+from matplotlib.widgets import Slider, CheckButtons
+from mpl_toolkits.mplot3d.proj3d import proj_transform
 
 logging.basicConfig(level=logging.INFO)
 
@@ -43,14 +37,21 @@ class DataItem(object):
 
     def __init__(self, pnt):
         self._pnt = pnt
+        self.data = self.parse_data()
+        self.datac = self.parse_data(cont=True)
 
-    @property
-    def data(self):
-        return self.parse_data()
+    # @property
+    # def data(self):
+    #     if '_data' not in dir(self):
+    #         self._data = self.parse_data()
+    #     return self._data
 
-    @property
-    def datac(self):
-        return self.parse_data(cont=True)
+    # @property
+    # def datac(self):
+    #     if '_datac' not in dir(self):
+    #         print("Entre")
+    #         self._datac = self.parse_data(cont=True)
+    #     return self._datac
 
     @property
     def valid(self):
@@ -63,6 +64,10 @@ class DataItem(object):
     @property
     def label(self):
         return self._pnt['label']
+
+    @label.setter
+    def label(self,val):
+        self._pnt['label'] = val
 
     @property
     def coords(self):
@@ -163,9 +168,8 @@ class DataItem(object):
             ja.frame = 0
             # Load segments into empty segment
             for coord in self.coords:
-                # Create empty list of length (last segment's frame +
-                # last segement's length)
-                n = [None] * (lista.frame + len(lista))
+                # Create empty list of the length of the stream
+                n = [None] * int(self._pnt.parent['nFrames'])
                 for i in segments:
                     dat = getattr(i, coord)
                     if isinstance(dat, list):
@@ -232,6 +236,9 @@ class Stream(object):
     def append(self, i):
         self.items.append(i)
 
+    def labels(self):
+        return [i.label for i in self.items]
+
     @property
     def freq(self):
         return float(self.pnt['frequency'])
@@ -242,14 +249,18 @@ class Stream(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    def longest_common_chunk(self):
+    def longest_common_chunk(self, labels=None):
         """Returns the longest period of time in which all
         coordinates of all DataItems are visible"""
 
         def f(x):
             return True if x is not None else False
 
-        items = self.items
+        if labels:
+            items = [self[i] for i in labels]
+        else:
+            items = self.items
+
         res = map(f, items[0].datac.X)
         for i in items:
             li = map(f, i.datac.X)
@@ -261,6 +272,14 @@ class Stream(object):
             enumerate(res), lambda x: x[1]) if k), key=lambda z: z[1])
         # j => (position,length)
         return j
+
+    @property
+    def startTime(self):
+        return int(self.pnt['startTime'])
+
+    @property
+    def nFrames(self):
+        return int(self.pnt['nFrames'])
 
 
 class MarkerStream(Stream):
@@ -300,98 +319,113 @@ class MarkerStream(Stream):
             raise KeyError("More than one marker with label %s", index)
 
     def toPandas(self):
-        ini,leng = self.longest_common_chunk()
+        ini, leng = self.longest_common_chunk()
 
         dat = {}
         for i in self.items:
             dat[i.label] = {}
-            for c in ['X','Y','Z']:
+            for c in ['X', 'Y', 'Z']:
                 dat[i.label][c] = i.datac[c]
         return dat
 
-    def draw(self):
-        #inipos,rang = self.longest_common_chunk()
-        inipos = 0;
-        rang = max(len(i.datac.X) for i in self.items)
+    def plot(self, labels=None):
+        # inipos,rang = self.longest_common_chunk()
+        if labels:
+            items = [self[i] for i in labels]
+        else:
+            items = self.items
+            labels = self.labels()
 
-        from mpl_toolkits.mplot3d.proj3d import proj_transform
-        from matplotlib.text import Annotation
+        inipos = 0
+        rang = max(len(i.datac.X) for i in self.items)
 
         def update_graph(num):
             num = int(num)
-            for i in self.items:
-                data = gdata[i.label]
-                X = data.X[num:1+num]
-                Y = data.Y[num:1+num]
-                Z = [-i if i else None for i in data.Z[num:1+num]]
-                if (X and Y and Z):
-                    graphs[i.label].set_data (X, Z)
+            for i in items:
+                data = self[i.label].datac
+                X = data.X[num:1 + num]
+                Y = data.Y[num:1 + num]
+                Z = [-j if j else None for j in data.Z[num:1 + num]]
+                if not (X[0] and Y[0] and Z[0]):
+                    X[0] = Y[0] = Z[0] = 0
+                    graphs[i.label].set_visible(False)
+                    graphs[i.label].set_data(X, Z)
+                    graphs[i.label].set_3d_properties(Y)
+                else:
+                    graphs[i.label].set_visible(True and check.get_status()[0])
+                    graphs[i.label].set_data(X, Z)
                     graphs[i.label].set_3d_properties(Y)
             for i in self.references.items:
-                data = rdata[i.label]
-                X = data.X[num:1+num]
-                Y = data.Y[num:1+num]
-                Z = [-i if i else None for i in data.Z[num:1+num]]
-                if (X and Y and Z):
-                    rraphs[i.label].set_data (X, Z)
+                data = self.references[i.label].datac
+                X = data.X[num:1 + num]
+                Y = data.Y[num:1 + num]
+                Z = [-j if j else None for j in data.Z[num:1 + num]]
+                if not (X[0] and Y[0] and Z[0]):
+                    X[0] = Y[0] = Z[0] = 0
+                    rraphs[i.label].set_visible(False)
+                    rraphs[i.label].set_data(X, Z)
                     rraphs[i.label].set_3d_properties(Y)
-
-                title.set_text('3D Markers Plot, time={}'.format((inipos+num)/self.freq))
+                else:
+                    rraphs[i.label].set_visible(True and check.get_status()[1])
+                    rraphs[i.label].set_data(X, Z)
+                    rraphs[i.label].set_3d_properties(Y)
+            title.set_text('3D Markers Plot, time={}'.format(
+                (inipos + num) / self.freq))
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         ax.axis('scaled')
-        ax.set_xlim([-2,2])
-        ax.set_ylim([-1,1])
+        ax.set_xlim([-2, 2])
+        ax.set_ylim([-1, 1])
         fig.tight_layout(True)
 
         title = ax.set_title('3D Markers Plot')
 
         axamp = plt.axes([0.25, .03, 0.50, 0.04])
-        samp = Slider(axamp, 'Time', inipos, rang, valinit=0)
+        samp = Slider(axamp, 'Time', inipos, rang - 1, valinit=0)
         samp.on_changed(update_graph)
 
         rax = plt.axes([0.05, 0.4, 0.1, 0.15])
         check = CheckButtons(rax, ('markers', 'references'), (True, True))
 
         def func(label):
-            if label == 'markers':
-                for i in graphs.values():
-                    i.set_visible(not i.get_visible())
-            elif label == 'references':
-                for i in rraphs.values():
-                    i.set_visible(not i.get_visible())
+            status = check.get_status()
+            for i in graphs.values():
+                i.set_visible(i.get_visible() and status[0])
+            for i in rraphs.values():
+                i.set_visible(i.get_visible() and status[1])
             fig.canvas.draw_idle()
 
         check.on_clicked(func)
 
         graphs = {}
-        gdata = {}
         rraphs = {}
-        rdata = {}
-        for i in self.items + self.references.items:
-            data = i.datac
-            X = data.X[inipos:inipos+1]
-            Y = data.Y[inipos:inipos+1]
-            Z = [-i if i else None for i in data.Z[inipos:inipos+1]]
+        for i in items + self.references.items:
+            X = Y = Z = [0]
             if i.name == 'track':
-                gdata[i.label] = data
-                graphs[i.label], = ax.plot(X, Z, Y,label=i.label,linestyle="", marker="o",picker = 5)
+                g, = ax.plot(
+                    X, Z, Y, label=i.label, linestyle="", marker="o", picker=5)
+                g.set_visible(False)
+                graphs[i.label] = g
             elif i.name == 'reference':
-                rdata[i.label] = data
-                rraphs[i.label], = ax.plot(X, Z, Y,label=i.label,linestyle="", marker="o",picker = 5)
+                r, = ax.plot(
+                    X, Z, Y, label=i.label, linestyle="", marker="o", picker=5)
+                r.set_visible(False)
+                rraphs[i.label] = r
 
-        annot = ax.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
+        annot = ax.annotate("", xy=(0, 0), xytext=(20, 20),
+                            textcoords="offset points",
                             bbox=dict(boxstyle="round", fc="w"),
                             arrowprops=dict(arrowstyle="->"))
+
         annot.set_visible(False)
 
         def hover(event):
             vis = annot.get_visible()
             for curve in ax.get_lines():
-                cont,ind = curve.contains(event)
+                cont, ind = curve.contains(event)
                 if cont and curve.get_visible():
-                    annot.xy = (event.xdata,event.ydata)
+                    annot.xy = (event.xdata, event.ydata)
                     annot.set_text(curve.get_label())
                     annot.get_bbox_patch().set_facecolor(curve.get_color())
                     annot.set_visible(True)
@@ -400,12 +434,76 @@ class MarkerStream(Stream):
                     if vis:
                         annot.set_visible(False)
                         fig.canvas.draw_idle()
-        
-        fig.canvas.mpl_connect('motion_notify_event',hover)
+
+        fig.canvas.mpl_connect('motion_notify_event', hover)
         plt.show()
 
-    def toTRC(self):
-        return Converter(self).toTRC()
+    def toTRC(self, filename, labels=None):
+        """ Converts markerStream to an OpenSIM trc's file
+            To avoid NaN values, the longest common chunk is used """
+
+        if labels:
+            items = []
+            for i in labels:
+                items.append(self[i])
+        else:
+            items = self.items
+            labels = self.labels()
+
+        freq = self.freq
+        ind, rang = self.longest_common_chunk(labels)
+
+        if not filename.endswith(".trc"):
+            filename = filename + ".trc"
+
+        firstFrame = ind
+        lastFrame = ind + rang
+
+        nrows = lastFrame - firstFrame + 1
+        units = 'm'
+
+        # Starting header generation
+
+        header1 = ['PathFileType', '4', '(X/Y/Z)', filename]
+        trc_header = []
+        trc_header.append('\t'.join(header1) + '\n')
+
+        header2 = ['DataRate', 'CameraRate',
+                   'NumFrames', 'NumMarkers',
+                   'Units', 'OrigDataRate',
+                   'OrigDataStartFrame', 'OrigNumFrames']
+
+        trc_header.append('\t'.join(header2) + '\n')
+
+        header3 = [str(freq), str(freq), str(nrows), str(nrows),
+                   str(units), str(freq), str(firstFrame), str(lastFrame)]
+        trc_header.append('\t'.join(header3) + '\n')
+
+        header4 = ['Frame#', 'Time', '\t\t\t'.join(labels)]
+        trc_header.append('\t'.join(header4) + '\n')
+
+        header5 = ['X' + str(x + 1) + '\tY' + str(x + 1) + '\tZ' +
+                   str(x + 1) + '\t' for x, y in enumerate(labels)]
+        trc_header.append('\t\t' + "".join(header5) + '\n')
+
+        def linewriter():
+            """ Data line generator """
+            f = ind
+            while f < lastFrame:
+                frameAndTime = "{}\t{:.2f}".format(f, f / freq)
+                xyz = "\t".join("{}\t{}\t{}".format(
+                    i.datac.X[f], i.datac.Y[f], i.datac.Z[f]) for i in items)
+                yield("{}\t{}\n".format(frameAndTime, xyz))
+                f = f + 1
+
+        lines = linewriter()
+
+        with open(filename, 'w') as file:
+            for row in trc_header:
+                file.write("%s" % row)
+
+            for l in lines:
+                file.write("%s" % l)
 
 
 class emgStream(Stream):
@@ -509,9 +607,13 @@ class Parser(object):
         if not self.trial:
             raise KeyError("Marker stream available only on a trial MDX")
 
+        if "_markerStream" in dir(self):
+            return self._markerStream
+
         stream = self.root.find_all('track', label='c7')
         if stream:
-            return MarkerStream(stream[0].parent)
+            self._markerStream = MarkerStream(stream[0].parent)
+            return self._markerStream
         else:
             raise KeyError("Could not find a marker stream")
 
@@ -550,11 +652,14 @@ class Parser(object):
                 return sessionMDXstream(stream)
 
 
-if __name__ == '__main__':
-    a = Parser('../tests/test_files/0776~af~Walking 06.mdx')
-    m = a.markers
-    for i in m.items+m.references.items:
-        print(i.label)
-    # for i in m.references:
-    #     print(i.label)
-    m.draw()
+# if __name__ == '__main__':
+#     # a = Parser('../tests/test_files/2148~aa~Walking 01.mdx')
+#     # # for i in m.references:
+#     # #     print(i.label)
+#     # a.markers['r asis'].label = "RASIS"
+#     # mlist = [i for i in a.markers.labels() if not (
+#     #     i.endswith(" s") or i.endswith(" s2"))]
+#     # #a.markers['RASIS']
+#     # a.markers.toTRC('cacho', mlist)
+#     # a.markers.plot(mlist)
+#     # print(mlist)
