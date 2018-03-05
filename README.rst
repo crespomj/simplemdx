@@ -1,3 +1,4 @@
+.. highlight:: python3
 ===============
 simplemdx
 ===============
