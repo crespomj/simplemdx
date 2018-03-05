@@ -7,6 +7,7 @@ import logging
 from past.builtins import basestring
 from future.utils import iteritems
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from itertools import groupby
 from future.moves.itertools import zip_longest
 import matplotlib.pyplot as plt
@@ -565,6 +566,10 @@ class sessionMDXstream(Stream):
     def date(self):
         return datetime.strptime(self['Session date'].data, "%d/%m/%Y").date()
 
+    @property
+    def age(self):
+        return relativedelta(self.date, self.birthday).years
+
 
 class Parser(object):
     def __init__(self, filename):
@@ -661,5 +666,4 @@ if __name__ == '__main__':
     a = Parser('../tests/test_files/2148~aa~Descalzo con bastón.mdx')
     # for i in m.references:
     #     print(i.label)
-    j = a.session['dRPD'].data
-    print(j)
+    print(a.session.age)

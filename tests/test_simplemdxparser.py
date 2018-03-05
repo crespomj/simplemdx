@@ -86,6 +86,8 @@ class TestParser(object):
         assert b.lastname == u'CASTAÑA'
         assert b.birthday == date(1959, 12, 1)
         assert b.date == date(2017, 7, 4)
+        assert b.age == 57
+
         assert b.sex == 'M'
         assert b.clinician == "Who, Doctor"
         assert b.taxid == 'TEC'
