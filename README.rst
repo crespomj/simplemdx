@@ -48,7 +48,7 @@ simplemdx gives access to:
 Usage
 -----
 
-To load the contents of a trial mdx::
+To load the contents of a trial mdx
 
 .. code:: python
 
