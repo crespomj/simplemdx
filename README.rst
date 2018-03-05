@@ -72,7 +72,7 @@ It also loads all it's streams, and names them according to their contents. The 
 Streams
 -------
 
-Every stream has its own metadata, such as frequency, start time and number of frames::
+Every stream has its own metadata, such as frequency, start time and number of frames
 
 .. code:: python
 
@@ -87,14 +87,15 @@ Every stream has its own metadata, such as frequency, start time and number of f
 Marker streams
 --------------
 
-Markers can be retrieved from the stream by index or label::
+Markers can be retrieved from the stream by index or label
 
 .. code:: python
 
     c7 = a.markers['c7']
     m = a.markers[0] # The first marker on the stream
 
-This stream can be converted to an OpenSIM .trc file like this::
+This stream can be converted to an OpenSIM .trc file like this
+
 .. code:: python
 
     m.toTRC()
@@ -104,7 +105,8 @@ By default, it creates a trc file with the same label as the trial mdx and all t
 .. code:: python
     m.toTRC(filename='my_trc_output.trc',labels=['c7','rasis','lasis'])
 
-As a simple way to inspect the stream, one can plot it::
+As a simple way to inspect the stream, one can plot it
+
 .. code:: python
     m.plot()
 
