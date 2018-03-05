@@ -13,6 +13,7 @@ from future.moves.itertools import zip_longest
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons
 from mpl_toolkits.mplot3d.proj3d import proj_transform
+import os
 
 logging.basicConfig(level=logging.INFO)
 
@@ -471,7 +472,7 @@ class MarkerStream(Stream):
 
         # Starting header generation
 
-        header1 = ['PathFileType', '4', '(X/Y/Z)', filename]
+        header1 = ['PathFileType', '4', '(X/Y/Z)', os.path.basename(filename)]
         trc_header = []
         trc_header.append('\t'.join(header1) + '\n')
 
@@ -482,7 +483,7 @@ class MarkerStream(Stream):
 
         trc_header.append('\t'.join(header2) + '\n')
 
-        header3 = [str(freq), str(freq), str(nrows), str(nrows),
+        header3 = [str(freq), str(freq), str(nrows), str(len(items)),
                    str(units), str(freq), str(firstFrame), str(lastFrame)]
         trc_header.append('\t'.join(header3) + '\n')
 
@@ -504,6 +505,8 @@ class MarkerStream(Stream):
                 f = f + 1
 
         lines = linewriter()
+
+        logging.info("Writing file %s",filename)
 
         with open(filename, 'w') as file:
             for row in trc_header:
@@ -664,6 +667,7 @@ class Parser(object):
 
 if __name__ == '__main__':
     a = Parser('../tests/test_files/2148~aa~Descalzo con bastón.mdx')
+    b = Parser('../tests/test_files/1477~ac~Walking 01.mdx')
     # for i in m.references:
     #     print(i.label)
-    print(a.session.age)
+    b.markers.toTRC()
