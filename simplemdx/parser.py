@@ -7,11 +7,13 @@ import logging
 from past.builtins import basestring
 from future.utils import iteritems
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from itertools import groupby
 from future.moves.itertools import zip_longest
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons
 from mpl_toolkits.mplot3d.proj3d import proj_transform
+import os
 
 logging.basicConfig(level=logging.INFO)
 
@@ -66,7 +68,7 @@ class DataItem(object):
         return self._pnt['label']
 
     @label.setter
-    def label(self,val):
+    def label(self, val):
         self._pnt['label'] = val
 
     @property
@@ -119,11 +121,11 @@ class DataItem(object):
 
         # else, load the data to self.
         d = self.parse_coords(data)
-        if isinstance(d,list):
-            for n,c in enumerate(self.coords):
-                self.__setattr__(c,d[n])
+        if isinstance(d, list):
+            for n, c in enumerate(self.coords):
+                self.__setattr__(c, d[n])
         else:
-            self.__setattr__(self.coords[0],d)
+            self.__setattr__(self.coords[0], d)
 
         return d
 
@@ -230,7 +232,7 @@ class Stream(object):
                 return lista[0]
             return lista
 
-    def __getattr__(self,val):
+    def __getattr__(self, val):
         return self[val]
 
     def __iter__(self):
@@ -441,7 +443,7 @@ class MarkerStream(Stream):
         fig.canvas.mpl_connect('motion_notify_event', hover)
         plt.show()
 
-    def toTRC(self, filename=None, labels=None):
+    def toTRC(self, filename=None, labels=None, start=None, stop=None):
         """ Converts markerStream to an OpenSIM trc's file
             To avoid NaN values, the longest common chunk is used """
 
@@ -470,7 +472,7 @@ class MarkerStream(Stream):
 
         # Starting header generation
 
-        header1 = ['PathFileType', '4', '(X/Y/Z)', filename]
+        header1 = ['PathFileType', '4', '(X/Y/Z)', os.path.basename(filename)]
         trc_header = []
         trc_header.append('\t'.join(header1) + '\n')
 
@@ -481,7 +483,7 @@ class MarkerStream(Stream):
 
         trc_header.append('\t'.join(header2) + '\n')
 
-        header3 = [str(freq), str(freq), str(nrows), str(nrows),
+        header3 = [str(freq), str(freq), str(nrows), str(len(items)),
                    str(units), str(freq), str(firstFrame), str(lastFrame)]
         trc_header.append('\t'.join(header3) + '\n')
 
@@ -504,6 +506,8 @@ class MarkerStream(Stream):
 
         lines = linewriter()
 
+        logging.info("Writing file %s", filename)
+
         with open(filename, 'w') as file:
             for row in trc_header:
                 file.write("%s" % row)
@@ -524,6 +528,28 @@ class emgStream(Stream):
         elif isinstance(index, basestring):
             return [i for i in self.items if i.label == index][0]
 
+
+class staticStream(Stream):
+    """docstring for staticStream"""
+
+    def __init__(self, pnt):
+        super(staticStream, self).__init__(pnt)
+
+    @property
+    def RTO(self):
+        return self['eRTO'].data
+
+    @property
+    def LTO(self):
+        return self['eLTO'].data
+
+    @property
+    def RHS(self):
+        return self['eRHS'].data
+
+    @property
+    def LHS(self):
+        return self['eLHS'].data
 
 class sessionMDXstream(Stream):
     """docstring for sessionMDXstream"""
@@ -546,13 +572,13 @@ class sessionMDXstream(Stream):
             ('filename', 'File name'),
             ('protocol', 'Protocol'),
             ('measureset', 'Measures set'),
-            ('mass','mTB'),
-            ('height','dTH'),
-            ('asis_breadth','dAB'),
-            ('right_pelvis_depth','dRPD'),
-            ('left_pelvis_depth','dLPD'),
-            ('right_leg_length','dRLL'),
-            ('left_leg_length','dLLL'))
+            ('mass', 'mTB'),
+            ('height', 'dTH'),
+            ('asis_breadth', 'dAB'),
+            ('right_pelvis_depth', 'dRPD'),
+            ('left_pelvis_depth', 'dLPD'),
+            ('right_leg_length', 'dRLL'),
+            ('left_leg_length', 'dLLL'))
 
         for j, k in d:
             self.__setattr__(j, self[k].data)
@@ -564,6 +590,10 @@ class sessionMDXstream(Stream):
     @property
     def date(self):
         return datetime.strptime(self['Session date'].data, "%d/%m/%Y").date()
+
+    @property
+    def age(self):
+        return relativedelta(self.date, self.birthday).years
 
 
 class Parser(object):
@@ -637,7 +667,7 @@ class Parser(object):
     def static(self):
         stream = self.root.static
         if stream:
-            return Stream(stream)
+            return staticStream(stream)
         else:
             raise KeyError("Could not find a static stream")
 
@@ -656,10 +686,34 @@ class Parser(object):
             if stream:
                 return sessionMDXstream(stream)
 
+    @property
+    def forces(self):
+        if not self.trial:
+            raise KeyError("Forces stream available only on a trial MDX")
+
+        stream = self.root.find_all('force')
+        if stream:
+            return Stream(stream[0].parent)
+        else:
+            raise KeyError("Could not find an forces stream")
+
+
 
 if __name__ == '__main__':
     a = Parser('../tests/test_files/2148~aa~Descalzo con bastón.mdx')
+    b = Parser('../tests/test_files/1477~ac~Walking 01.mdx')
     # for i in m.references:
     #     print(i.label)
-    j = a.session['dRPD'].data
-    print(j)
+    j = b.forces
+    # for i in j:
+    #     print(i.label,i.data)
+
+    d = j['r gr'][0].data
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    X = d.X
+    Y = d.Z
+    Z = [-i if i else None for i in d.Y]
+    ax.scatter(X,Z,Y)
+    plt.show()
