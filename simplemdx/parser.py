@@ -443,7 +443,7 @@ class MarkerStream(Stream):
         fig.canvas.mpl_connect('motion_notify_event', hover)
         plt.show()
 
-    def toTRC(self, filename=None, labels=None, start=None, stop=None):
+    def toTRC(self, filename=None, labels=None, startTime=None, endTime=None):
         """ Converts markerStream to an OpenSIM trc's file
             To avoid NaN values, the longest common chunk is used """
 
@@ -466,6 +466,21 @@ class MarkerStream(Stream):
 
         firstFrame = ind
         lastFrame = ind + rang
+
+        """ Check that startTime and endTime are contained in the longest common chunk.
+            Raise an error otherwise"""
+
+        if startTime:
+            if firstFrame <= startTime * freq <= lastFrame:
+                firstFrame = int(startTime * freq)
+            else:
+                raise IndexError("startTime not inside longest common chunk")
+
+        if endTime:
+            if firstFrame <= endTime * freq <= lastFrame:
+                lastFrame = int(endTime * freq)
+            else:
+                raise IndexError("endTime not inside longest common chunk")
 
         nrows = lastFrame - firstFrame + 1
         units = 'm'
@@ -496,8 +511,8 @@ class MarkerStream(Stream):
 
         def linewriter():
             """ Data line generator """
-            f = ind
-            while f < lastFrame:
+            f = firstFrame
+            while f <= lastFrame:
                 frameAndTime = "{}\t{:.2f}".format(f, f / freq)
                 xyz = "\t".join("{}\t{}\t{}".format(
                     i.datac.X[f], i.datac.Y[f], i.datac.Z[f]) for i in items)
@@ -701,19 +716,21 @@ class Parser(object):
 
 if __name__ == '__main__':
     a = Parser('../tests/test_files/2148~aa~Descalzo con bastón.mdx')
-    b = Parser('../tests/test_files/1477~ac~Walking 01.mdx')
-    # for i in m.references:
-    #     print(i.label)
-    j = b.forces
+    b = Parser('../tests/test_files/2067~ac~Walking 06.mdx')
+    # # for i in m.references:
+    # #     print(i.label)
+    # j = b.markers.longest_common_chunk()
+    # print(j)
+    # b.markers.toTRC("jojo.trc",startTime=4,endTime=6.42)
     # for i in j:
     #     print(i.label,i.data)
 
-    d = j['r gr'][0].data
+    # d = j['r gr'][0].data
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    X = d.X
-    Y = d.Z
-    Z = [-i if i else None for i in d.Y]
-    ax.scatter(X,Z,Y)
-    plt.show()
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    # X = d.X
+    # Y = d.Z
+    # Z = [-i if i else None for i in d.Y]
+    # ax.scatter(X,Z,Y)
+    # plt.show()
