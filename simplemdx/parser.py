@@ -8,7 +8,7 @@ from past.builtins import basestring
 from future.utils import iteritems
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from itertools import groupby
+from itertools import groupby, chain
 from future.moves.itertools import zip_longest
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons
@@ -287,6 +287,31 @@ class Stream(object):
         return int(self.pnt['nFrames'])
 
 
+class ForceStream(Stream):
+    def __init__(self, pnt):
+        self.pressure = Stream()
+        self.torque = Stream()
+        super(ForceStream, self).__init__(pnt)
+
+    def load(self, pnt):
+        for i in (j for j in pnt if isinstance(j, Tag)):
+            if i.name == 'force':
+                logging.debug('Adding force label %s', i['label'])
+                self.items.append(DataItem(i))
+            elif i.name == 'track':
+                logging.debug('Adding pressure label %s', i['label'])
+                self.pressure.append(DataItem(i))
+            elif i.name == 'torque':
+                logging.debug('Adding torque label %s', i['label'])
+                self.torque.append(DataItem(i))
+            else:
+                logging.warning("Where should %s %s be put?",
+                                i.name, i['label'])
+
+    def toMOT(selfself, filename=None, labels=None, startTime=None, endTime=None):
+        """ Converts forceStream to an OpenSIM's mot file """
+
+
 class MarkerStream(Stream):
     """docstring for MarkerStream"""
 
@@ -444,7 +469,7 @@ class MarkerStream(Stream):
         plt.show()
 
     def toTRC(self, filename=None, labels=None, startTime=None, endTime=None):
-        """ Converts markerStream to an OpenSIM trc's file
+        """ Converts markerStream to an OpenSIM's trc file
             To avoid NaN values, the longest common chunk is used """
 
         if not filename:
@@ -459,28 +484,21 @@ class MarkerStream(Stream):
             labels = self.labels()
 
         freq = self.freq
-        ind, rang = self.longest_common_chunk(labels)
 
         if not filename.endswith(".trc"):
             filename = filename + ".trc"
 
-        firstFrame = ind
-        lastFrame = ind + rang
+        firstFrame = 0
+        lastFrame = self.nFrames - 1
 
         """ Check that startTime and endTime are contained in the longest common chunk.
             Raise an error otherwise"""
 
         if startTime:
-            if firstFrame <= startTime * freq <= lastFrame:
-                firstFrame = int(startTime * freq)
-            else:
-                raise IndexError("startTime not inside longest common chunk")
+            firstFrame = int(startTime * freq)
 
         if endTime:
-            if firstFrame <= endTime * freq <= lastFrame:
-                lastFrame = int(endTime * freq)
-            else:
-                raise IndexError("endTime not inside longest common chunk")
+            lastFrame = int(endTime * freq)
 
         nrows = lastFrame - firstFrame + 1
         units = 'm'
@@ -509,14 +527,22 @@ class MarkerStream(Stream):
                    str(x + 1) + '\t' for x, y in enumerate(labels)]
         trc_header.append('\t\t' + "".join(header5) + '\n')
 
+        def l(x):
+            if x:
+                return str(x)
+            return "NaN"
+
         def linewriter():
             """ Data line generator """
             f = firstFrame
             while f <= lastFrame:
                 frameAndTime = "{}\t{:.2f}".format(f, f / freq)
-                xyz = "\t".join("{}\t{}\t{}".format(
-                    i.datac.X[f], i.datac.Y[f], i.datac.Z[f]) for i in items)
-                yield("{}\t{}\n".format(frameAndTime, xyz))
+                gen = ((i.datac.X[f],i.datac.Y[f],i.datac.Z[f]) for i in items)
+                gen = map(l,chain.from_iterable(gen))
+                xyz = "\t".join(gen)
+                fa = "{}\t{}\n".format(frameAndTime, xyz)
+                print(fa)
+                yield fa
                 f = f + 1
 
         lines = linewriter()
@@ -527,8 +553,8 @@ class MarkerStream(Stream):
             for row in trc_header:
                 file.write("%s" % row)
 
-            for l in lines:
-                file.write("%s" % l)
+            for li in lines:
+                file.write("%s" % li)
 
 
 class emgStream(Stream):
@@ -708,29 +734,33 @@ class Parser(object):
 
         stream = self.root.find_all('force')
         if stream:
-            return Stream(stream[0].parent)
+            return ForceStream(stream[0].parent)
         else:
             raise KeyError("Could not find an forces stream")
 
 
 
 if __name__ == '__main__':
-    a = Parser('../tests/test_files/2148~aa~Descalzo con bastón.mdx')
-    b = Parser('../tests/test_files/2067~ac~Walking 06.mdx')
+    a = Parser('../tests/test_files/2255~aa~Descalzo sólo.mdx')
+    j = Parser('../tests/test_files/2255~aa~Walking 01.mdx')
+
+    # c = b.forces['r gr'][0].datac
+    # print(c.X)
     # # for i in m.references:
     # #     print(i.label)
-    # j = b.markers.longest_common_chunk()
+    # j = b.markers.longest_commonñ_chunk()
     # print(j)
-    # b.markers.toTRC("jojo.trc",startTime=4,endTime=6.42)
+    j.markers.toTRC("jojo.trc")
     # for i in j:
     #     print(i.label,i.data)
 
-    # d = j['r gr'][0].data
-
+    # d = j.forces['r gr'].datac
+    # #print(d[1].name)
+    # import numpy as np
     # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # X = d.X
-    # Y = d.Z
-    # Z = [-i if i else None for i in d.Y]
-    # ax.scatter(X,Z,Y)
+    # ax = fig.add_subplot(111)
+    # X = np.array(d.X)
+    # Z = np.array(d.Z)
+    # Y = np.array(d.Y)
+    # plt.plot(np.arange(len(d.Y))/j.forces.freq,Y)
     # plt.show()
